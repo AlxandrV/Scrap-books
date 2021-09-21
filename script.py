@@ -12,22 +12,38 @@ return content html
 return @Beautiful object
 """
 def scrap(url):
-    url = "http://books.toscrape.com/"
     r = requests.get(url)
-    page = r.content
 
-    return BeautifulSoup(page, "html.parser")
+    if r.ok:
+        page = r.content
+        return BeautifulSoup(page, "html.parser")
+    else:
+        return r.status_code
 
 
-"""Category"""
+"""Extract categorys"""
 url = "http://books.toscrape.com/"
 soup = scrap(url)
-nodes = soup.find("ul", class_="nav nav-list").find("li").find_all("a")
+categorys = soup.find("ul", class_="nav nav-list").find("li").find_all("a")
 
-array = []
-for node in nodes:
-    node_str = node.text
-    node_str = node_str.replace('\n', '')
-    array.append(node_str.strip())
+category_name = []
+book_url = []
 
-print(array)
+"""Foreach category"""
+for category in categorys:
+    category_str = category.text
+    category_str = category_str.replace('\n', '').strip()
+    category_name.append(category_str)
+
+    # Get url category
+    url_category = url + category.get('href')
+    url_category = url_category.replace('index.html', '')
+    soup_category = scrap(url_category)
+    books = soup_category.find_all('div', class_="image_container")
+
+    """Foreach book"""
+    for book in books:
+        book = book.find('a').get('href')
+        book_url.append(book)
+
+print(len(book_url))
