@@ -41,8 +41,8 @@ Function scrap category page
 Soup tag to scrap
 param @tag_category
 
-Return soup page
-return @scrap(url_category)
+Return soup page and url
+return @[scrap(url_category), url_category]
 """
 def category_scrap(tag_category):
     # Get category name
@@ -52,7 +52,46 @@ def category_scrap(tag_category):
     # Get url category
     url_category = url + tag_category.get('href')
     url_category = url_category.replace('index.html', '')
-    return scrap(url_category)
+    return [scrap(url_category), url_category]
+
+
+"""
+Function scrap book in page
+
+"""
+def book_scrap(soup_category):
+    books = soup_category.find_all('div', class_="image_container")
+
+    """Foreach book"""
+    for book in books:
+        book = book.find('a').get('href')
+        book_url.append(book)
+
+
+"""
+Function scrap pagination
+
+Soup to category page
+param @soup_category
+"""
+def pagination(array_category):
+
+    book_scrap(array_category[0])
+    quant_result = array_category[0].find('form', class_='form-horizontal').find_all('strong')
+
+    if len(quant_result) > 1:
+
+        # Rounded whole number
+        tot_result = int(strip_string(quant_result[0]))
+        filtr_number = int(strip_string(quant_result[-1]))
+        number_pages = int(tot_result // filtr_number + (1 if tot_result % filtr_number > 0 else 0))
+
+        # Foreach page
+        for i in range(2, number_pages+1):
+
+            soup = scrap(array_category[1] + f'page-{i}.html')
+            book_scrap(soup)
+
 
 
 """Extract categorys"""
@@ -63,35 +102,11 @@ categorys = soup.find('ul', class_='nav nav-list').find('ul').find_all('a')
 category_name = []
 book_url = []
 
-# 17 pour test pagination
-soup_category = category_scrap(categorys[17])
-quant_result = soup_category.find('form', class_='form-horizontal').find_all('strong')
-
-if len(quant_result) > 1:
-
-    # Rounded whole number
-    tot_result = int(strip_string(quant_result[0]))
-    filtr_number = int(strip_string(quant_result[-1]))
-    number_pages = int(tot_result // filtr_number + (1 if tot_result % filtr_number > 0 else 0))
-    print(number_pages)
-
 """Foreach category"""
-# for category in categorys:
+for category in categorys:
 
-#     soup_category = category_scrap(category)
-
-#     # Get page number
-#     page = soup_category.find()
-#     print(soup_category)
+    soup_category = category_scrap(category)
+    pagination(soup_category)
 
 
-# print(48 // 20 + (1 if 48 % 20 > 0 else 0))
-
-    # books = soup_category.find_all('div', class_="image_container")
-
-    # """Foreach book"""
-    # for book in books:
-    #     book = book.find('a').get('href')
-    #     book_url.append(book)
-
-# print(len(book_url))
+print(len(book_url))
