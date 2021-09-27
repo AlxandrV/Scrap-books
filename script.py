@@ -35,43 +35,57 @@ def strip_string(string):
     return string.replace('\n', '').strip()
 
 
+"""
+Function scrap category page
+
+Soup tag to scrap
+param @tag_category
+
+Return soup page
+return @scrap(url_category)
+"""
+def category_scrap(tag_category):
+    # Get category name
+    category_str = strip_string(tag_category)
+    category_name.append(category_str)
+    
+    # Get url category
+    url_category = url + tag_category.get('href')
+    url_category = url_category.replace('index.html', '')
+    return scrap(url_category)
+
 
 """Extract categorys"""
 url = 'http://books.toscrape.com/'
 soup = scrap(url)
-categorys = soup.find('ul', class_='nav nav-list').find('li').find_all('a')
+categorys = soup.find('ul', class_='nav nav-list').find('ul').find_all('a')
 
 category_name = []
 book_url = []
 
+# 17 pour test pagination
+soup_category = category_scrap(categorys[17])
+quant_result = soup_category.find('form', class_='form-horizontal').find_all('strong')
+
+if len(quant_result) > 1:
+
+    # Rounded whole number
+    tot_result = int(strip_string(quant_result[0]))
+    filtr_number = int(strip_string(quant_result[-1]))
+    number_pages = int(tot_result // filtr_number + (1 if tot_result % filtr_number > 0 else 0))
+    print(number_pages)
+
 """Foreach category"""
-for category in categorys:
-    # Get category name
-    category_str = strip_string(category)
-    # category_str = category_str.replace('\n', '').strip()
-    category_name.append(category_str)
+# for category in categorys:
 
-    # Get url category
-    url_category = url + category.get('href')
-    url_category = url_category.replace('index.html', '')
-    soup_category = scrap(url_category)
+#     soup_category = category_scrap(category)
 
-    # Get page number
-    page = soup_category.find('li', class_='current')
-    if page != None:
-        page = strip_string(page)
-        page = int(page[-2:].strip())
-
-        """Foreach page"""
-        i = 1
-        while i <= page:
-            soup_page = scrap(url_category + f'page-{i}.html')
-            print(soup_page)
-            i += 1
+#     # Get page number
+#     page = soup_category.find()
+#     print(soup_category)
 
 
-
-
+# print(48 // 20 + (1 if 48 % 20 > 0 else 0))
 
     # books = soup_category.find_all('div', class_="image_container")
 
@@ -80,4 +94,4 @@ for category in categorys:
     #     book = book.find('a').get('href')
     #     book_url.append(book)
 
-print(len(book_url))
+# print(len(book_url))
