@@ -6,15 +6,14 @@ import csv
 
 class Scrapbook:
 
-    category_name = []
-    book_url = []
-    book_dicts = [] 
-    url='http://books.toscrape.com/'
+    _category_name = []
+    _book_dicts = [] 
+    _url='http://books.toscrape.com/'
 
     def __init__(self):
 
         """Extract categorys"""
-        soup = self._scrap(self.url)
+        soup = self._scrap(self._url)
         categorys = soup.find('ul', class_='nav nav-list').find('ul').find_all('a')
 
         """Foreach category"""
@@ -66,10 +65,10 @@ class Scrapbook:
         return @array """
         # Get category name
         category_str = self._strip_string(tag_category)
-        self.category_name.append(category_str)
+        self._category_name.append(category_str)
         
         # Get url category
-        url_category = self.url + tag_category.get('href')
+        url_category = self._url + tag_category.get('href')
         url_category = url_category.replace('index.html', '')
         return [self._scrap(url_category), url_category]
 
@@ -98,12 +97,12 @@ class Scrapbook:
             book_dictionnary['price_excluding_tax'] = self._strip_string(product_information[2])
             book_dictionnary['number_available'] = self._strip_string(product_information[5])
             book_dictionnary['product_description'] = self._strip_string(soup_book.find('div', class_="sub-header").find_next_sibling('p'))
-            book_dictionnary['category'] = self.category_name[-1]
+            book_dictionnary['category'] = self._category_name[-1]
             book_dictionnary['review_rating'] = self._strip_string(product_information[6])
             book_dictionnary['image_url'] = book_url.replace('index.html', '') + soup_book.find('div', class_="item active").find('img').get('src')
             # print(book_dictionnary)
 
-            self.book_dicts.append(book_dictionnary)
+            self._book_dicts.append(book_dictionnary)
 
 
 
@@ -129,7 +128,7 @@ class Scrapbook:
                 soup = self._scrap(array_category[1] + f'page-{i}.html')
                 self._book_scrap([soup, array_category[1]])
 
-        self.convert_to_csv(self.book_dicts)
+        self.convert_to_csv(self._book_dicts)
 
     def convert_to_csv(self, dictionnary):
         """ Function convert dictionnary to a CSV
@@ -137,7 +136,7 @@ class Scrapbook:
         Dictionnary to convert
         param @dict """
 
-        with open(f'{self.category_name[-1]}.csv', mode="w") as file_out:
+        with open(f'{self._category_name[-1]}.csv', mode="w") as file_out:
 
             fieldnames = ['product_page_url','universal_product_code (upc)','title','price_including_tax','price_excluding_tax','number_available','product_description','category','review_rating','image_url']
             result = csv.DictWriter(file_out, fieldnames=fieldnames)
