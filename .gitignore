@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # Files CSV
-*.csv
+/files_csv

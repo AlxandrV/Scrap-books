@@ -1,4 +1,4 @@
-from os import remove
+import os
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -14,7 +14,7 @@ class Scrapbook:
 
         """Extract categorys"""
         soup = self._scrap(self._url)
-        categorys = soup.find('ul', class_='nav nav-list').find('ul').find_all('a')
+        categorys = soup[0].find('ul', class_='nav nav-list').find('ul').find_all('a')
 
         """Foreach category"""
         for category in categorys[0:2]:
@@ -31,13 +31,13 @@ class Scrapbook:
         param @string
 
         return content html
-        return @Beautiful object """
+        return @array Soup content and url """
 
         r = requests.get(url)
 
         if r.ok:
             page = r.content
-            return BeautifulSoup(page, 'html.parser')
+            return [BeautifulSoup(page, 'html.parser', from_encoding="utf-8"), r.url]
         else:
             return r.status_code
 
@@ -62,7 +62,7 @@ class Scrapbook:
         param @Beautiful object
 
         Return soup page and url
-        return @array """
+        return @array Soup content and url """
         # Get category name
         category_str = self._strip_string(tag_category)
         self._category_name.append(category_str)
@@ -70,50 +70,48 @@ class Scrapbook:
         # Get url category
         url_category = self._url + tag_category.get('href')
         url_category = url_category.replace('index.html', '')
-        return [self._scrap(url_category), url_category]
+        return self._scrap(url_category)
 
 
-    def _book_scrap(self, array_category):
+    def _book_scrap(self, soup_category):
         """ Function scrap book in page and collect information
 
         Soup to category page
         param @Beautiful object """
-
-        books = array_category[0].find_all('div', class_="image_container")
+        books = soup_category[0].find_all('div', class_="image_container")
 
         """Foreach book"""
         for book in books:
 
             book_dictionnary = {}
-            book_url = array_category[1] + book.find('a').get('href')
-            book_dictionnary['product_page_url'] = book_url
-            
+            book_url = soup_category[1] + book.find('a').get('href')
             soup_book = self._scrap(book_url)
-            product_information = soup_book.find('table', class_="table table-striped").find_all('td')
-            # print(product_information)
+            book_dictionnary['product_page_url'] = soup_book[1]
+            product_information = soup_book[0].find('table', class_="table table-striped").find_all('td')
             book_dictionnary['universal_product_code (upc)'] = self._strip_string(product_information[0])
-            book_dictionnary['title'] = self._strip_string(soup_book.find('h1'))
+            book_dictionnary['title'] = self._strip_string(soup_book[0].find('h1'))
             book_dictionnary['price_including_tax'] = self._strip_string(product_information[3])
             book_dictionnary['price_excluding_tax'] = self._strip_string(product_information[2])
             book_dictionnary['number_available'] = self._strip_string(product_information[5])
-            book_dictionnary['product_description'] = self._strip_string(soup_book.find('div', class_="sub-header").find_next_sibling('p'))
+            book_dictionnary['product_description'] = self._strip_string(soup_book[0].find('div', class_="sub-header").find_next_sibling('p'))
             book_dictionnary['category'] = self._category_name[-1]
             book_dictionnary['review_rating'] = self._strip_string(product_information[6])
-            book_dictionnary['image_url'] = book_url.replace('index.html', '') + soup_book.find('div', class_="item active").find('img').get('src')
-            # print(book_dictionnary)
+            img_url = requests.get(book_url.replace('index.html', '') + soup_book[0].find('div', class_="item active").find('img').get('src')).url
+            book_dictionnary['image_url'] = img_url
 
             self._book_dicts.append(book_dictionnary)
 
 
 
-    def _pagination(self, array_category):
+    def _pagination(self, soup_category):
         """ Function scrap pagination
 
         Soup to category page and url
         param @array """
 
-        self._book_scrap(array_category)
-        quant_result = array_category[0].find('form', class_='form-horizontal').find_all('strong')
+        # print(len(soup_category))
+        self._book_scrap(soup_category)
+        quant_result = soup_category[0].find('form', class_='form-horizontal').find_all('strong')
 
         if len(quant_result) > 1:
 
@@ -125,24 +123,32 @@ class Scrapbook:
             # Foreach page
             for i in range(2, number_pages+1):
 
-                soup = self._scrap(array_category[1] + f'page-{i}.html')
-                self._book_scrap([soup, array_category[1]])
+                soup = self._scrap(soup_category[1] + f'page-{i}.html')
+                soup[1] = soup[1].replace(f'page-{i}.html', '')
+                self._book_scrap(soup)
 
-        self.convert_to_csv(self._book_dicts)
+        self.convert_to_csv()
 
-    def convert_to_csv(self, dictionnary):
+    def convert_to_csv(self):
         """ Function convert dictionnary to a CSV
 
         Dictionnary to convert
         param @dict """
+        
+        current_dir = os.getcwd()
+        files_dir = '/files_csv'
+        if os.path.exists(current_dir + files_dir) == False:
+            os.mkdir(current_dir + files_dir)
 
-        with open(f'{self._category_name[-1]}.csv', mode="w") as file_out:
+        with open(f'{current_dir + files_dir}/{self._category_name[-1]}.csv', mode="w", newline="") as file_out:
 
             fieldnames = ['product_page_url','universal_product_code (upc)','title','price_including_tax','price_excluding_tax','number_available','product_description','category','review_rating','image_url']
-            result = csv.DictWriter(file_out, fieldnames=fieldnames)
+            result = csv.DictWriter(file_out, fieldnames=fieldnames, delimiter='|')
             result.writeheader()
-                # result = csv.writer(file_out)
-
-            for row in dictionnary:
-                result.writerow(row)
+            # result = csv.writer(file_out)
+            # for row in self._book_dicts:
+            #     print(row)
+            result.writerows(self._book_dicts)
+        
+        self._book_dicts = []
 
