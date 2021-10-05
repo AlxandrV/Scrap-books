@@ -78,14 +78,20 @@ class Scrapbook:
 
         Soup to category page
         param @Beautiful object """
+        # Get tag for all book in page
         books = soup_category[0].find_all('div', class_="image_container")
 
         """Foreach book"""
         for book in books:
 
+            # Containing for all information of a book
             book_dictionnary = {}
+
+            # Get content HTML of a book
             book_url = soup_category[1] + book.find('a').get('href')
             soup_book = self._scrap(book_url)
+
+            # Collected all information of a book in dictionnary
             book_dictionnary['product_page_url'] = soup_book[1]
             product_information = soup_book[0].find('table', class_="table table-striped").find_all('td')
             book_dictionnary['universal_product_code (upc)'] = self._strip_string(product_information[0])
@@ -96,11 +102,36 @@ class Scrapbook:
             book_dictionnary['product_description'] = self._strip_string(soup_book[0].find('div', class_="sub-header").find_next_sibling('p'))
             book_dictionnary['category'] = self._category_name[-1]
             book_dictionnary['review_rating'] = self._strip_string(product_information[6])
-            img_url = requests.get(book_url.replace('index.html', '') + soup_book[0].find('div', class_="item active").find('img').get('src')).url
+            # img_url = requests.get().url
+            img_url = self._file_image(book_dictionnary['title'], book_url.replace('index.html', '') + soup_book[0].find('div', class_="item active").find('img').get('src'))
             book_dictionnary['image_url'] = img_url
 
             self._book_dicts.append(book_dictionnary)
 
+
+    def _file_image(self, title, url):
+        """ Function write file image in media directory
+
+        Title of a book
+        param @string
+
+        Url to file image
+        param @string
+
+        Return url image
+        return @string """
+
+        current_dir = os.getcwd()
+        files_dir = '/media'
+        if os.path.exists(current_dir + files_dir) == False:
+            os.mkdir(current_dir + files_dir)
+
+        title = title.replace(' ', '_').replace(':', '')
+        with open(f'{current_dir + files_dir}/{title}.jpg', mode="wb") as file_img:
+            response = requests.get(url)
+            file_img.write(response.content)
+
+        return response.url
 
 
     def _pagination(self, soup_category):
@@ -134,7 +165,7 @@ class Scrapbook:
 
         Dictionnary to convert
         param @dict """
-        
+
         current_dir = os.getcwd()
         files_dir = '/files_csv'
         if os.path.exists(current_dir + files_dir) == False:
@@ -145,9 +176,6 @@ class Scrapbook:
             fieldnames = ['product_page_url','universal_product_code (upc)','title','price_including_tax','price_excluding_tax','number_available','product_description','category','review_rating','image_url']
             result = csv.DictWriter(file_out, fieldnames=fieldnames, delimiter='|')
             result.writeheader()
-            # result = csv.writer(file_out)
-            # for row in self._book_dicts:
-            #     print(row)
             result.writerows(self._book_dicts)
         
         self._book_dicts = []
