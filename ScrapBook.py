@@ -17,7 +17,7 @@ class Scrapbook:
         categorys = soup[0].find('ul', class_='nav nav-list').find('ul').find_all('a')
 
         """Foreach category"""
-        for category in categorys[0:2]:
+        for category in categorys:
 
             soup_category = self._category_scrap(category)
             self._pagination(soup_category)
@@ -99,10 +99,10 @@ class Scrapbook:
             book_dictionnary['price_including_tax'] = self._strip_string(product_information[3])
             book_dictionnary['price_excluding_tax'] = self._strip_string(product_information[2])
             book_dictionnary['number_available'] = self._strip_string(product_information[5])
-            book_dictionnary['product_description'] = self._strip_string(soup_book[0].find('div', class_="sub-header").find_next_sibling('p'))
+            if soup_book[0].find('div', class_="sub-header").find_next_sibling('p'):
+                book_dictionnary['product_description'] = self._strip_string(soup_book[0].find('div', class_="sub-header").find_next_sibling('p'))
             book_dictionnary['category'] = self._category_name[-1]
             book_dictionnary['review_rating'] = self._strip_string(product_information[6])
-            # img_url = requests.get().url
             img_url = self._file_image(book_dictionnary['title'], book_url.replace('index.html', '') + soup_book[0].find('div', class_="item active").find('img').get('src'))
             book_dictionnary['image_url'] = img_url
 
@@ -120,13 +120,13 @@ class Scrapbook:
 
         Return url image
         return @string """
-
+        # print(url)
         current_dir = os.getcwd()
         files_dir = '/media'
         if os.path.exists(current_dir + files_dir) == False:
             os.mkdir(current_dir + files_dir)
 
-        title = title.replace(' ', '_').replace(':', '')
+        title = title.replace(' ', '_').replace(':', '').replace('/', '_').replace('\\', '_').replace('"', '').replace('*', '').replace('.', '').replace('?', '').replace('\'', '')
         with open(f'{current_dir + files_dir}/{title}.jpg', mode="wb") as file_img:
             response = requests.get(url)
             file_img.write(response.content)
@@ -171,7 +171,7 @@ class Scrapbook:
         if os.path.exists(current_dir + files_dir) == False:
             os.mkdir(current_dir + files_dir)
 
-        with open(f'{current_dir + files_dir}/{self._category_name[-1]}.csv', mode="w", newline="") as file_out:
+        with open(f'{current_dir + files_dir}/{self._category_name[-1]}.csv', mode="w", newline="", encoding="utf8") as file_out:
 
             fieldnames = ['product_page_url','universal_product_code (upc)','title','price_including_tax','price_excluding_tax','number_available','product_description','category','review_rating','image_url']
             result = csv.DictWriter(file_out, fieldnames=fieldnames, delimiter='|')

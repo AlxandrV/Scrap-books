@@ -1,7 +1,7 @@
 # Scrap-books
 
 Scrapper for http://books.toscrape.com/  
-Open your favourite console commands and let's go !
+Open your favourite shell and let's go !
 
 
 > The script creates the different files and folders  
