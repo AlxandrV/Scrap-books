@@ -24,7 +24,7 @@ python -m venv env
 
 For Windows
 ```sh
-source env/Script/activate
+source env/Scripts/activate
 ```
 
 For Linux

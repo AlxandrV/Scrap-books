@@ -25,13 +25,8 @@ class Scrapbook:
 
 
     def _scrap(self, url):
-        """ Funtion scrap to url
-
-        url to scrap
-        param @string
-
-        return content html
-        return @array Soup content and url """
+        """ Funtion scrap to url """
+        """ return @array Soup content and url """
 
         r = requests.get(url)
 
@@ -43,26 +38,17 @@ class Scrapbook:
 
 
     def _strip_string(self, soup_string):
-        """ Function strip a string
-
-        string to strip
-        param @Beautiful object
-
-        Return strip to string
-        return @string """
+        """ Function strip a string """
+        """ return @string """
 
         string = soup_string.text
         return string.replace('\n', '').strip()
 
 
     def _category_scrap(self, tag_category):
-        """ Function scrap category page
+        """ Function scrap category page """
+        """ return @array Soup content and url """
 
-        Soup tag to scrap
-        param @Beautiful object
-
-        Return soup page and url
-        return @array Soup content and url """
         # Get category name
         category_str = self._strip_string(tag_category)
         self._category_name.append(category_str)
@@ -74,10 +60,8 @@ class Scrapbook:
 
 
     def _book_scrap(self, soup_category):
-        """ Function scrap book in page and collect information
+        """ Function scrap book in page and collect information """
 
-        Soup to category page
-        param @Beautiful object """
         # Get tag for all book in page
         books = soup_category[0].find_all('div', class_="image_container")
 
@@ -110,16 +94,9 @@ class Scrapbook:
 
 
     def _file_image(self, title, url):
-        """ Function write file image in media directory
+        """ Function write file image in media directory """
+        """ return @string """
 
-        Title of a book
-        param @string
-
-        Url to file image
-        param @string
-
-        Return url image
-        return @string """
         # print(url)
         current_dir = os.getcwd()
         files_dir = '/media'
@@ -135,10 +112,7 @@ class Scrapbook:
 
 
     def _pagination(self, soup_category):
-        """ Function scrap pagination
-
-        Soup to category page and url
-        param @array """
+        """ Function scrap pagination """
 
         # print(len(soup_category))
         self._book_scrap(soup_category)
@@ -161,10 +135,7 @@ class Scrapbook:
         self.convert_to_csv()
 
     def convert_to_csv(self):
-        """ Function convert dictionnary to a CSV
-
-        Dictionnary to convert
-        param @dict """
+        """ Function convert dictionnary to a CSV """
 
         current_dir = os.getcwd()
         files_dir = '/files_csv'
